@@ -14,9 +14,15 @@
   <script>
     (async () => {
       try {
-        const response = await fetch("./solar-system.html.gz.b64");
-        if (!response.ok || !("DecompressionStream" in window)) throw new Error();
-        const encoded = (await response.text()).trim();
+        const paths = [
+          "./solar-system-source-v2-part-01.b64",
+          "./solar-system-source-v2-part-02.b64",
+          "./solar-system-source-v2-part-03.b64",
+          "./solar-system-source-v2-part-04.b64"
+        ];
+        const responses = await Promise.all(paths.map(path => fetch(path)));
+        if (responses.some(response => !response.ok) || !("DecompressionStream" in window)) throw new Error();
+        const encoded = (await Promise.all(responses.map(response => response.text()))).join("").trim();
         const compressed = Uint8Array.from(atob(encoded), character => character.charCodeAt(0));
         const stream = new Blob([compressed]).stream().pipeThrough(new DecompressionStream("gzip"));
         const html = await new Response(stream).text();
